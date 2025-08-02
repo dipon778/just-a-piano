@@ -185,28 +185,51 @@ function highlightKey(key) {
 }
 
 // Play rhythm function
-async function playRhythm(rhythm, tempo = 500) {
-    const keys = rhythm.split(',');
-    for (let i = 0; i < keys.length; i++) {
-        playNote(keys[i]);
+async function playRhythm(rhythmKeys, tempo = 500) {
+    if (!rhythmKeys || typeof rhythmKeys !== 'string') {
+        console.error('Invalid rhythm pattern');
+        return;
+    }
+
+    const keys = rhythmKeys.split(',').filter(Boolean);
+    
+    for (const key of keys) {
+        playNote(key.trim());
         await new Promise(resolve => setTimeout(resolve, tempo));
     }
 }
 
-// Add event listeners for rhythm buttons
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize rhythm buttons
+function initRhythms() {
     document.querySelectorAll('.play-rhythm').forEach(button => {
         button.addEventListener('click', async (e) => {
-            const rhythm = e.target.dataset.rhythm;
+            const rhythm = e.target.getAttribute('data-rhythm');
+            if (!rhythm) {
+                console.error('No rhythm pattern found');
+                return;
+            }
+
+            // Visual feedback
             button.disabled = true;
+            const originalText = button.textContent;
             button.textContent = 'Playing...';
-            
-            await playRhythm(rhythm);
-            
-            button.disabled = false;
-            button.textContent = 'Play';
+
+            try {
+                await playRhythm(rhythm);
+            } catch (err) {
+                console.error('Error playing rhythm:', err);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
         });
     });
+}
+
+// Add to your existing initialization code
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing initialization code...
+    initRhythms();
 });
 
 // Initialize audio with error handling
