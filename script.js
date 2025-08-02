@@ -146,18 +146,33 @@ function playNote(key) {
         return;
     }
 
-    // Add frequency analysis
+    // Create audio nodes
     const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
     const source = audioContext.createBufferSource();
+    
+    // Setup source and connect nodes
     source.buffer = audioBuffer;
     source.connect(analyser);
     analyser.connect(audioContext.destination);
     
-    // Log frequency data
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyser.getFloatFrequencyData(dataArray);
-    console.log(`Playing note ${key} - Buffer sample rate: ${audioBuffer.sampleRate}Hz`);
+    // Map keys to note names
+    const keyToNote = {
+        'A': 'C4', 'W': 'Db4', 'S': 'D4', 'E': 'Eb4',
+        'D': 'E4', 'F': 'F4', 'T': 'Gb4', 'G': 'G4',
+        'Y': 'Ab4', 'H': 'A4', 'U': 'Bb4', 'J': 'B4',
+        'K': 'C5'
+    };
+
+    const noteFrequencies = {
+        'C4': 261.63, 'Db4': 277.18, 'D4': 293.66, 'Eb4': 311.13,
+        'E4': 329.63, 'F4': 349.23, 'Gb4': 369.99, 'G4': 392.00,
+        'Ab4': 415.30, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
+        'C5': 523.25
+    };
+
+    const noteName = keyToNote[key];
+    console.log(`Playing ${noteName} - Frequency: ${noteFrequencies[noteName]} Hz`);
 
     source.start(0);
     highlightKey(key);
@@ -168,6 +183,31 @@ function highlightKey(key) {
   el && (el.classList.add('playing'),
            setTimeout(() => el.classList.remove('playing'), 150));
 }
+
+// Play rhythm function
+async function playRhythm(rhythm, tempo = 500) {
+    const keys = rhythm.split(',');
+    for (let i = 0; i < keys.length; i++) {
+        playNote(keys[i]);
+        await new Promise(resolve => setTimeout(resolve, tempo));
+    }
+}
+
+// Add event listeners for rhythm buttons
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.play-rhythm').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const rhythm = e.target.dataset.rhythm;
+            button.disabled = true;
+            button.textContent = 'Playing...';
+            
+            await playRhythm(rhythm);
+            
+            button.disabled = false;
+            button.textContent = 'Play';
+        });
+    });
+});
 
 // Initialize audio with error handling
 window.addEventListener('load', () => {
