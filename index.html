@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF‑8" />
+  <meta name="viewport" content="width=device‑width, initial‑scale=1.0" />
+  <title>Classical Piano</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Source+Sans+Pro:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+
+
+</head>
+<body>
+
+<header>
+  <h1>🎹 Classical Piano</h1>
+  <p class="subheading">Use A W S E D F T G Y H U J K keys to play</p>
+</header>
+
+<div id="keyboard">
+  <!-- QWERTY row mapped to C4–C5 notes -->
+  <div class="key white" data-key="A"><div class="key-label">C4<br> [A]</div></div>
+  <div class="key black" data-key="W"><div class="key-label">C♯4<br> [W]</div></div>
+  <div class="key white" data-key="S"><div class="key-label">D4<br> [S]</div></div>
+  <div class="key black" data-key="E"><div class="key-label">D♯4<br> [E]</div></div>
+  <div class="key white" data-key="D"><div class="key-label">E4<br> [D]</div></div>
+  <div class="key white" data-key="F"><div class="key-label">F4<br> [F]</div></div>
+  <div class="key black" data-key="T"><div class="key-label">F♯4<br> [T]</div></div>
+  <div class="key white" data-key="G"><div class="key-label">G4<br> [G]</div></div>
+  <div class="key black" data-key="Y"><div class="key-label">G♯4<br> [Y]</div></div>
+  <div class="key white" data-key="H"><div class="key-label">A4<br> [H]</div></div>
+  <div class="key black" data-key="U"><div class="key-label">A♯4<br> [U]</div></div>
+  <div class="key white" data-key="J"><div class="key-label">B4<br> [J]</div></div>
+  <div class="key white" data-key="K"><div class="key-label">C5<br> [K]</div></div>
+</div>
+
+<footer>
+  Built with ❤️ – Classical Piano Demo
+</footer>
+
+<script>
+  const KEY_BINDINGS = ['A','W','S','E','D','F','T','G','Y','H','U','J','K'];
+  const BASE_OCTAVE = 4;
+  const audioCache = new Map();
+  let noteMap = {};  // will be { 'A': 'C4', ... }
+
+  async function initAudio() {
+    const res = await fetch('/sounds/');
+    if (!res.ok) throw new Error('Sounds folder not found');
+    const html = await res.text();
+    const files = [...html.matchAll(/href="([^"]+\.mp3)"/g)].map(m => m[1]);
+    const filtered = files.filter(fn => fn.startsWith(/[A-G][b#]?\d+/));
+    const octaveFiles = filtered.filter(f => f.endsWith(BASE_OCTAVE + '.mp3'));
+    
+    octaveFiles.sort((a,b) => {
+      const n1=parseInt(a.match(/\d+/)[0],10),
+            n2=parseInt(b.match(/\d+/)[0],10);
+      return n1 - n2;
+    });
+
+    for (let i = 0; i < KEY_BINDINGS.length; i++) {
+      const key = KEY_BINDINGS[i];
+      const filename = octaveFiles[i] && octaveFiles[i].replace('.mp3','');
+      if (filename) {
+        noteMap[key] = filename;
+        const audio = new Audio(`/sounds/${filename}.mp3`);
+        audio.preload = 'auto';
+        await new Promise(ok => audio.addEventListener('canplaythrough', ok, { once: true }));
+        audioCache.set(key, audio);
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      const key = e.key.toUpperCase();
+      const a = audioCache.get(key);
+      if (a) {
+        a.currentTime = 0;
+        a.play();
+        highlightKey(key);
+      }
+    });
+
+    document.querySelectorAll('.key').forEach(el =>
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        const a = audioCache.get(key);
+        if (a) {
+          a.currentTime = 0;
+          a.play();
+          highlightKey(key);
+        }
+      })
+    );
+  }
+
+  function highlightKey(key) {
+    const el = document.querySelector(`.key[data-key="${key}"]`);
+    if (!el) return;
+    el.classList.add('playing');
+    setTimeout(() => el.classList.remove('playing'), 150);
+  }
+
+  initAudio().catch(err =>
+    console.error('Error initializing piano sounds:', err)
+  );
+</script>
+
+</body>
+</html>

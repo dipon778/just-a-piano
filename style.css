@@ -1,0 +1,115 @@
+    :root {
+      --white‑key: #F3EEE4;
+      --black‑key: #2B2A28;
+      --accent: #B38F6D;
+      --highlight: #D0AF8F;
+      --bg‑overlay: rgba(18,16,15,0.75);
+      --font‑serif: 'Playfair Display', serif;
+      --font‑sans: 'Source Sans Pro', sans‑serif;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box‑sizing: border‑box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min‑height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background:
+        linear‑gradient(var(--bg‑overlay), var(--bg‑overlay)),
+        url('background.jpg') center/cover no‑repeat;
+      color: var(--white‑key);
+      font‑family: var(--font‑sans);
+      line‑height: 1.4;
+    }
+
+    header {
+      margin: 2rem 0 1rem;
+      text-align: center;
+    }
+
+    h1 {
+      font‑family: var(--font‑serif);
+      font‑size: clamp(2.5rem, 5vw, 4rem);
+      color: var(--accent);
+      margin: 0 1rem;
+      letter-spacing: 0.05em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    p.subheading {
+      font‑style: italic;
+      font‑weight: 300;
+      color: var(--white‑key);
+      margin: 0.5rem;
+    }
+
+    #keyboard {
+      margin: 2rem 0;
+      display: flex;
+      user-select: none;
+    }
+
+    .key {
+      position: relative;
+      border-radius: 4px;
+      border: 1px solid #333;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-family: var(--font‑serif);
+      font-weight: bold;
+      transition: transform 0.05s ease;
+    }
+
+    .white {
+      background: var(--white‑key);
+      color: #111;
+      width: 56px;
+      height: 240px;
+      margin: 0 1px;
+      z-index: 1;
+    }
+
+    .black {
+      background: var(--black‑key);
+      color: var(--white‑key);
+      width: 36px;
+      height: 150px;
+      z-index: 2;
+      margin: 0 -18px;
+    }
+
+    .key.playing {
+      background: var(--highlight);
+      color: #111;
+      transform: scale(1.08);
+      box-shadow: 0 0 20px var(--highlight);
+    }
+
+    .key-label {
+      padding: 4px;
+      font-size: 0.8rem;
+      text-align: center;
+      width: 100%;
+      letter-spacing: 0.02em;
+      color: inherit;
+    }
+
+    footer {
+      margin: 2rem;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+
+    @media (max-width: 600px) {
+      .white { width: 40px; height: 180px; }
+      .black { width: 26px; height: 110px; margin: 0 -13px; }
+    }
