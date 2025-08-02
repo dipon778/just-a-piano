@@ -1,4 +1,10 @@
 FROM nginx:alpine
-COPY . /usr/share/nginx/html
-COPY sounds/ /usr/share/nginx/html/sounds/
+
+# Copy the application files
+COPY . /usr/share/nginx/html/
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
 EXPOSE 80
