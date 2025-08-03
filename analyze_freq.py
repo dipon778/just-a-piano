@@ -18,10 +18,17 @@ def analyze_note(file_path):
 def main():
     notes_dir = 'sounds'
     expected_frequencies = {
-        'C4': 261.63, 'Db4': 277.18, 'D4': 293.66, 'Eb4': 311.13,
-        'E4': 329.63, 'F4': 349.23, 'Gb4': 369.99, 'G4': 392.00,
-        'Ab4': 415.30, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
-        'C5': 523.25
+        # Standard A440 tuning frequencies
+        'E4': 329.63,   # Key: D
+        'Eb4': 311.13,  # Key: E (black key)
+        'E4': 329.63,   # Key: D
+        'Eb4': 311.13,  # Key: E
+        'E4': 329.63,   # Key: D
+        'B3': 246.94,   # Key: S
+        'D4': 293.66,   # Key: S
+        'C4': 261.63,   # Key: A
+        'A3': 220.00,   # Key: Z (need to add this key binding)
+        # ...existing frequencies...
     }
     
     for file in sorted(os.listdir(notes_dir)):

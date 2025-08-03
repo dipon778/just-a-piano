@@ -213,7 +213,7 @@ function highlightKey(key) {
 }
 
 // Play rhythm function
-async function playRhythm(rhythmKeys, tempo = 400) {
+async function playRhythm(rhythmKeys, tempo = 180) {
     if (!rhythmKeys || typeof rhythmKeys !== 'string') {
         console.error('Invalid rhythm pattern');
         return;
@@ -222,14 +222,15 @@ async function playRhythm(rhythmKeys, tempo = 400) {
     const keys = rhythmKeys.split(',').filter(Boolean);
     const button = document.querySelector(`[data-rhythm="${rhythmKeys}"]`);
     const customTempo = button ? parseInt(button.dataset.tempo) : tempo;
+    const pattern = button.dataset.pattern?.split(',').map(Number) || keys.map(() => 1);
     
     for (let i = 0; i < keys.length; i++) {
         const key = keys[i].trim();
         playNote(key);
         
-        // Add slight pause between notes for better articulation
-        const pauseTime = customTempo * 0.9;
-        await new Promise(resolve => setTimeout(resolve, pauseTime));
+        // Duration based on pattern
+        const duration = pattern[i] * customTempo;
+        await new Promise(resolve => setTimeout(resolve, duration));
     }
 }
 
@@ -289,7 +290,8 @@ const keyToNote = {
     'H': 'A4',   // Concert A (440 Hz)
     'U': 'Bb4',  // Change to Bb
     'J': 'B4',   
-    'K': 'C5'    
+    'K': 'C5',    // Adding higher C
+    'Z': 'A3'     // Adding lower A for Für Elise
 };
 
 // Update frequency table to use flat notation matching piano standards
