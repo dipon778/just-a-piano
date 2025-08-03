@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+venv/
+.env
+
+# Build outputs
+dist/
+build/
+*.min.js
+*.min.css
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# Logs and databases
+*.log
+*.sqlite
+debug.log
+npm-debug.log*
+
+# Cache directories
+.cache/
+.npm/
+.eslintcache
+__pycache__/
+*.pyc
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.tmp
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Audio files (optional, uncomment if you don't want to track sound files)
+# sounds/*.mp3
+# sounds/*.wav
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

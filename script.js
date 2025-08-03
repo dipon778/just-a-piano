@@ -58,8 +58,8 @@ async function loadAudio(url) {
 }
 
 function mapKeysToNotes(soundFiles) {
-  // Define complete chromatic scale
-  const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C'];
+  // Define complete chromatic scale using sharp notation
+  const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'];
   
   // Filter and sort files for current octave
   const octave = soundFiles
@@ -139,6 +139,10 @@ function handleKeyClick(e) {
 }
 
 // Modified playNote function
+function isValidFrequency(freq) {
+    return freq >= 20 && freq <= 20000; // Human hearing range
+}
+
 function playNote(key) {
     const audioBuffer = audioCache.get(key);
     if (!audioBuffer) {
@@ -148,7 +152,7 @@ function playNote(key) {
 
     // Create audio nodes
     const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
+    analyser.fftSize = 4096; // Increased for better resolution
     const source = audioContext.createBufferSource();
     
     // Setup source and connect nodes
@@ -156,25 +160,49 @@ function playNote(key) {
     source.connect(analyser);
     analyser.connect(audioContext.destination);
     
-    // Map keys to note names
-    const keyToNote = {
-        'A': 'C4', 'W': 'Db4', 'S': 'D4', 'E': 'Eb4',
-        'D': 'E4', 'F': 'F4', 'T': 'Gb4', 'G': 'G4',
-        'Y': 'Ab4', 'H': 'A4', 'U': 'Bb4', 'J': 'B4',
-        'K': 'C5'
+    // Create frequency analysis
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Float32Array(bufferLength);
+    const sampleRate = audioContext.sampleRate;
+    
+    // Function to find fundamental frequency
+    const findFundamentalFrequency = () => {
+        analyser.getFloatFrequencyData(dataArray);
+        
+        // Get frequency resolution
+        const frequencyBinCount = sampleRate / analyser.fftSize;
+        
+        // Find peak frequency
+        let maxIndex = 0;
+        let maxValue = -Infinity;
+        
+        // Only look at lower frequencies where fundamentals typically are
+        const maxBin = Math.floor(2000 / frequencyBinCount);
+        
+        for (let i = 0; i < maxBin; i++) {
+            if (dataArray[i] > maxValue) {
+                maxValue = dataArray[i];
+                maxIndex = i;
+            }
+        }
+        
+        return maxIndex * frequencyBinCount;
     };
-
-    const noteFrequencies = {
-        'C4': 261.63, 'Db4': 277.18, 'D4': 293.66, 'Eb4': 311.13,
-        'E4': 329.63, 'F4': 349.23, 'Gb4': 369.99, 'G4': 392.00,
-        'Ab4': 415.30, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
-        'C5': 523.25
-    };
-
-    const noteName = keyToNote[key];
-    console.log(`Playing ${noteName} - Frequency: ${noteFrequencies[noteName]} Hz`);
-
+    
+    // Start playing and analyze
     source.start(0);
+    requestAnimationFrame(() => {
+        const freq = findFundamentalFrequency();
+        if (isValidFrequency(freq)) {
+            console.log(`
+                Note: ${key}
+                Measured Frequency: ${freq.toFixed(2)} Hz
+                Expected Frequency: ${noteFrequencies[keyToNote[key]]} Hz
+                Difference: ${(freq - noteFrequencies[keyToNote[key]]).toFixed(2)} Hz
+            `);
+        }
+    });
+    
     highlightKey(key);
 }
 
@@ -192,12 +220,16 @@ async function playRhythm(rhythmKeys, tempo = 400) {
     }
 
     const keys = rhythmKeys.split(',').filter(Boolean);
+    const button = document.querySelector(`[data-rhythm="${rhythmKeys}"]`);
+    const customTempo = button ? parseInt(button.dataset.tempo) : tempo;
     
-    for (const key of keys) {
-        playNote(key.trim());
-        // Use different tempos for sequences vs rhythms
-        const isSequence = keys.length > 8;
-        await new Promise(resolve => setTimeout(resolve, isSequence ? tempo * 1.5 : tempo));
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i].trim();
+        playNote(key);
+        
+        // Add slight pause between notes for better articulation
+        const pauseTime = customTempo * 0.9;
+        await new Promise(resolve => setTimeout(resolve, pauseTime));
     }
 }
 
@@ -243,3 +275,36 @@ window.addEventListener('load', () => {
         document.body.prepend(errorDiv);
     });
 });
+
+const keyToNote = {
+    'A': 'C4',   // Middle C
+    'W': 'Db4',  // Change to Db (standard piano notation often uses flats)
+    'S': 'D4',   
+    'E': 'Eb4',  // Change to Eb
+    'D': 'E4',   
+    'F': 'F4',   
+    'T': 'Gb4',  // Change to Gb
+    'G': 'G4',   
+    'Y': 'Ab4',  // Change to Ab
+    'H': 'A4',   // Concert A (440 Hz)
+    'U': 'Bb4',  // Change to Bb
+    'J': 'B4',   
+    'K': 'C5'    
+};
+
+// Update frequency table to use flat notation matching piano standards
+const noteFrequencies = {
+    'C4': 261.63,   // Middle C
+    'Db4': 277.18,  // Using flats instead of sharps
+    'D4': 293.66,
+    'Eb4': 311.13,
+    'E4': 329.63,
+    'F4': 349.23,
+    'Gb4': 369.99,
+    'G4': 392.00,
+    'Ab4': 415.30,
+    'A4': 440.00,   // Concert pitch
+    'Bb4': 466.16,
+    'B4': 493.88,
+    'C5': 523.25
+};
