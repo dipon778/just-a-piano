@@ -185,7 +185,7 @@ function highlightKey(key) {
 }
 
 // Play rhythm function
-async function playRhythm(rhythmKeys, tempo = 500) {
+async function playRhythm(rhythmKeys, tempo = 400) {
     if (!rhythmKeys || typeof rhythmKeys !== 'string') {
         console.error('Invalid rhythm pattern');
         return;
@@ -195,27 +195,27 @@ async function playRhythm(rhythmKeys, tempo = 500) {
     
     for (const key of keys) {
         playNote(key.trim());
-        await new Promise(resolve => setTimeout(resolve, tempo));
+        // Use different tempos for sequences vs rhythms
+        const isSequence = keys.length > 8;
+        await new Promise(resolve => setTimeout(resolve, isSequence ? tempo * 1.5 : tempo));
     }
 }
 
-// Initialize rhythm buttons
+// Initialize both rhythm and sequence buttons
 function initRhythms() {
-    document.querySelectorAll('.play-rhythm').forEach(button => {
+    document.querySelectorAll('.play-rhythm, .play-sequence').forEach(button => {
         button.addEventListener('click', async (e) => {
             const rhythm = e.target.getAttribute('data-rhythm');
-            if (!rhythm) {
-                console.error('No rhythm pattern found');
-                return;
-            }
+            if (!rhythm) return;
 
-            // Visual feedback
             button.disabled = true;
             const originalText = button.textContent;
             button.textContent = 'Playing...';
 
             try {
-                await playRhythm(rhythm);
+                // Use slower tempo for sequences
+                const tempo = button.classList.contains('play-sequence') ? 500 : 400;
+                await playRhythm(rhythm, tempo);
             } catch (err) {
                 console.error('Error playing rhythm:', err);
             } finally {
