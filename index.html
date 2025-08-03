@@ -6,6 +6,12 @@
     <title>Classic Piano</title>
     <link rel="stylesheet" href="style.css">
     <meta name="description" content="An elegant virtual piano experience">
+    <script>
+    // Feature detection
+    if (!window.AudioContext && !window.webkitAudioContext) {
+        document.documentElement.classList.add('no-webaudio');
+    }
+</script>
 </head>
 <body>
     <header>
@@ -29,6 +35,8 @@
         <div data-key="K" class="key white"><span class="key-label">K</span></div>
     </main>
 
+    <div id="status"></div>
+
     <section class="rhythm-section">
         <h2>Popular Rhythms</h2>
         <div class="rhythm-grid">
@@ -36,37 +44,49 @@
                 <h3>Für Elise</h3>
                 <p>Beethoven's famous theme</p>
                 <button class="play-rhythm" 
-                        data-rhythm="D,E,D,E,D,S,A,Z,A,S,D,G,D,A,Z" 
+                        data-rhythm="E,D#,E,D#,E,B,D,C,A" 
                         data-tempo="180"
-                        data-pattern="1,1,1,1,1,1,2,1,1,1,1,1,2,1,2">Play</button>
+                        data-pattern="1,1,1,1,1,1,1,1,2">Play</button>
             </div>
-            
+
             <div class="rhythm-card">
                 <h3>Moonlight Sonata</h3>
                 <p>Beethoven's opening</p>
-                <button class="play-rhythm" data-rhythm="A,E,H,A,E,H,A" data-tempo="600">Play</button>
+                <button class="play-rhythm" 
+                        data-rhythm="A,E,H,A,E,H,A,E" 
+                        data-tempo="600"
+                        data-pattern="3,1.5,1.5,3,1.5,1.5,3,1.5">Play</button>
             </div>
-            
+
             <div class="rhythm-card">
                 <h3>Turkish March</h3>
                 <p>Mozart's theme</p>
-                <button class="play-rhythm" data-rhythm="H,J,K,J,H,G,H" data-tempo="300">Play</button>
+                <button class="play-rhythm" 
+                        data-rhythm="H,J,K,J,H,G,H" 
+                        data-tempo="200"
+                        data-pattern="1,1,1,1,1,1,2">Play</button>
             </div>
 
             <div class="rhythm-card">
                 <h3>C Major Scale</h3>
                 <p>Basic practice pattern</p>
-                <button class="play-rhythm" data-rhythm="A,S,D,F,G,H,J,K" data-tempo="300">Play</button>
+                <button class="play-rhythm" 
+                        data-rhythm="A,S,D,F,G,H,J,K" 
+                        data-tempo="250"
+                        data-pattern="1,1,1,1,1,1,1,2">Play</button>
             </div>
         </div>
-
-        <h2>Long Piano Sequences</h2>
     </section>
 
     <footer>
         <p id="status">Ready to play</p>
     </footer>
 
+    <noscript>
+    <div class="error-message">
+        Please enable JavaScript to use the piano.
+    </div>
+</noscript>
     <script src="script.js"></script>
 </body>
 </html>
