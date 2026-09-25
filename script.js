@@ -13,8 +13,12 @@ const NOTE_MAPPINGS = {
         'H': 'A4',   // Concert A (440 Hz)
         'U': 'Bb4',  // Black key
         'J': 'B4',
-        'K': 'C5',   // High C
-        'Z': 'A3'    // Low A for Für Elise
+        'K': 'C5',
+        'O': 'Db5',  // Black key
+        'L': 'D5',
+        'P': 'Eb5',  // Black key
+        ';': 'E5',
+        'Z': 'A3'    // Low A: computer keyboard only, no on-screen key
     }
 };
 
