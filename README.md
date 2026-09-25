@@ -6,7 +6,7 @@ Classic Piano is a beautiful, minimalist virtual piano you can play right in you
 
 ## Features
 
-- **Professional Piano Sound**: Play 13 notes (C4–C5) mapped to your keyboard or mouse.
+- **Professional Piano Sound**: Play 17 notes (C4–E5) mapped to your keyboard or mouse.
 - **Minimalist Design**: Elegant, responsive interface for desktop and mobile.
 - **Popular Rhythms**: Try 5 scrollable rhythm patterns with one click.
 - **Instant Play**: No login, no setup—just open and play!
@@ -31,6 +31,10 @@ Classic Piano is a beautiful, minimalist virtual piano you can play right in you
 |  U  |  Bb4  |
 |  J  |  B4   |
 |  K  |  C5   |
+|  O  |  Db5  |
+|  L  |  D5   |
+|  P  |  Eb5  |
+|  ;  |  E5   |
 
 ---
 
@@ -77,7 +81,7 @@ classic-bloody-piano/
 ## Customization
 
 - **Add More Notes**: Place additional `.mp3` files in the `sounds/` folder and update the key mapping in `script.js`.
-- **Change Rhythms**: Edit the rhythm section in `index.html` to add your own patterns.
+- **Change Rhythms**: Edit the rhythm cards in `index.html`. Each button takes `data-rhythm` (keyboard keys, e.g. `A,S,D`), `data-pattern` (each note's length in beats) and `data-beat-ms` (one beat in milliseconds). Melodies must fit the C4–E5 keys, so transpose them if needed.
 
 ---
 

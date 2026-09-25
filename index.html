@@ -33,6 +33,10 @@
         <div data-key="U" class="key black"><span class="key-label">U</span></div>
         <div data-key="J" class="key white"><span class="key-label">J</span></div>
         <div data-key="K" class="key white"><span class="key-label">K</span></div>
+        <div data-key="O" class="key black"><span class="key-label">O</span></div>
+        <div data-key="L" class="key white"><span class="key-label">L</span></div>
+        <div data-key="P" class="key black"><span class="key-label">P</span></div>
+        <div data-key=";" class="key white"><span class="key-label">;</span></div>
     </main>
 
     <div id="status"></div>
@@ -40,39 +44,48 @@
     <section class="rhythm-section">
         <h2>Popular Rhythms</h2>
         <div class="rhythm-grid">
+            <!-- Keys: A=C4 W=C#4 S=D4 E=D#4 D=E4 F=F4 T=F#4 G=G4 Y=G#4 H=A4 U=A#4 J=B4
+                       K=C5 O=C#5 L=D5 P=D#5 ;=E5.
+                 Melodies are transposed where needed to fit this C4–E5 keyboard.
+                 data-pattern is each note's length in beats; data-beat-ms is one beat. -->
             <div class="rhythm-card">
                 <h3>Für Elise</h3>
-                <p>Beethoven's famous theme</p>
-                <button class="play-rhythm" 
-                        data-rhythm="E,D#,E,D#,E,B,D,C,A" 
-                        data-tempo="180"
-                        data-pattern="1,1,1,1,1,1,1,1,2">Play</button>
+                <p>Beethoven's opening theme (bars 1–8), in its original key</p>
+                <!-- Right hand, A minor, in 16ths (the left hand fills the held notes):
+                     E D# | E D# E B D C | A . C E A | B . E G# B | C . E E D# |
+                     E D# E B D C | A . C E A | B . E C B | A -->
+                <button class="play-rhythm"
+                        data-rhythm=";,P,;,P,;,J,L,K,H,A,D,H,J,D,Y,J,K,D,;,P,;,P,;,J,L,K,H,A,D,H,J,D,K,J,H"
+                        data-beat-ms="160"
+                        data-pattern="1,1,1,1,1,1,1,1,3,1,1,1,3,1,1,1,3,1,1,1,1,1,1,1,1,1,3,1,1,1,3,1,1,1,6">Play</button>
             </div>
 
             <div class="rhythm-card">
                 <h3>Moonlight Sonata</h3>
-                <p>Beethoven's opening</p>
-                <button class="play-rhythm" 
-                        data-rhythm="A,E,H,A,E,H,A,E" 
-                        data-tempo="600"
-                        data-pattern="3,1.5,1.5,3,1.5,1.5,3,1.5">Play</button>
+                <p>Beethoven's opening arpeggios, in F♯ minor</p>
+                <!-- Triplets: i (C# F# A) x4, VI (D F# A) x2, N6 (D G B) x2, V7 (C# E# B) x2, i -->
+                <button class="play-rhythm"
+                        data-rhythm="W,T,H,W,T,H,W,T,H,W,T,H,S,T,H,S,T,H,S,G,J,S,G,J,W,F,J,W,F,J,W,T,H"
+                        data-beat-ms="330"
+                        data-pattern="1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4">Play</button>
             </div>
 
             <div class="rhythm-card">
                 <h3>Turkish March</h3>
-                <p>Mozart's theme</p>
-                <button class="play-rhythm" 
-                        data-rhythm="H,J,K,J,H,G,H" 
-                        data-tempo="200"
-                        data-pattern="1,1,1,1,1,1,2">Play</button>
+                <p>Mozart's Rondo alla Turca, in D minor</p>
+                <!-- E D C# D F | G F E F A | Bb A G# A -->
+                <button class="play-rhythm"
+                        data-rhythm="D,S,W,S,F,G,F,D,F,H,U,H,Y,H"
+                        data-beat-ms="140"
+                        data-pattern="1,1,1,1,2,1,1,1,1,2,1,1,1,4">Play</button>
             </div>
 
             <div class="rhythm-card">
                 <h3>C Major Scale</h3>
                 <p>Basic practice pattern</p>
-                <button class="play-rhythm" 
-                        data-rhythm="A,S,D,F,G,H,J,K" 
-                        data-tempo="250"
+                <button class="play-rhythm"
+                        data-rhythm="A,S,D,F,G,H,J,K"
+                        data-beat-ms="250"
                         data-pattern="1,1,1,1,1,1,1,2">Play</button>
             </div>
         </div>

@@ -13,8 +13,12 @@ const NOTE_MAPPINGS = {
         'H': 'A4',   // Concert A (440 Hz)
         'U': 'Bb4',  // Black key
         'J': 'B4',
-        'K': 'C5',   // High C
-        'Z': 'A3'    // Low A for Für Elise
+        'K': 'C5',
+        'O': 'Db5',  // Black key
+        'L': 'D5',
+        'P': 'Eb5',  // Black key
+        ';': 'E5',
+        'Z': 'A3'    // Low A: computer keyboard only, no on-screen key
     }
 };
 
@@ -92,10 +96,16 @@ function buildAudioURL(noteName) {
 
 // Note Playing
 function playNote(key) {
+    if (startSample(key)) highlightKey(key);
+}
+
+// Starts the sample for key; `when` is an AudioContext time (Web Audio only).
+// Returns false if the sample isn't loaded.
+function startSample(key, when = 0) {
     const sample = audioCache.get(key);
     if (!sample) {
         console.warn(`No audio buffer found for key: ${key}`);
-        return;
+        return false;
     }
 
     if (USE_MEDIA_ELEMENTS) {
@@ -111,42 +121,52 @@ function playNote(key) {
         const source = audioContext.createBufferSource();
         source.buffer = sample;
         source.connect(audioContext.destination);
-        source.start(0);
+        source.start(when);
     }
-
-    highlightKey(key);
+    return true;
 }
 
 // Rhythm Playing
 let isPlaying = false;
+const SCHEDULE_LEAD_S = 0.05; // headroom so the first scheduled note isn't late
 
-async function playRhythm(rhythmKeys, tempo = 200) {
-    if (!rhythmKeys || typeof rhythmKeys !== 'string' || isPlaying) {
-        return;
-    }
+async function playRhythm(button) {
+    if (isPlaying) return;
 
+    const buttons = document.querySelectorAll('.play-rhythm');
     try {
         isPlaying = true;
-        const button = document.querySelector(`[data-rhythm="${rhythmKeys}"]`);
-        if (button) button.disabled = true;
+        buttons.forEach(btn => btn.disabled = true);
 
-        const keys = rhythmKeys.split(',').filter(Boolean);
-        const patterns = button?.dataset.pattern?.split(',').map(Number) || keys.map(() => 1);
-        const actualTempo = button?.dataset.tempo ? parseInt(button.dataset.tempo) : tempo;
+        const keys = button.dataset.rhythm.split(',').map(k => k.trim()).filter(Boolean);
+        const beats = button.dataset.pattern?.split(',').map(Number) ?? keys.map(() => 1);
+        const beatMs = Number(button.dataset.beatMs) || 200;
 
-        for (let i = 0; i < keys.length; i++) {
-            const key = keys[i].trim();
-            playNote(key);
-            
-            // Calculate delay based on pattern and tempo
-            const delay = patterns[i] * actualTempo;
-            await new Promise(resolve => setTimeout(resolve, delay));
+        // Web Audio: schedule every note on the audio clock up front, which is
+        // sample-accurate, unlike chained setTimeouts that drift.
+        // <audio> elements can't be scheduled, so fall back to timers there.
+        let t0 = 0;
+        if (!USE_MEDIA_ELEMENTS) {
+            await audioContext.resume();
+            t0 = audioContext.currentTime + SCHEDULE_LEAD_S;
         }
+
+        let offsetMs = 0;
+        keys.forEach((key, i) => {
+            if (USE_MEDIA_ELEMENTS) {
+                setTimeout(() => playNote(key), offsetMs);
+            } else {
+                startSample(key, t0 + offsetMs / 1000);
+                setTimeout(() => highlightKey(key), offsetMs + SCHEDULE_LEAD_S * 1000);
+            }
+            offsetMs += (beats[i] || 1) * beatMs;
+        });
+
+        await new Promise(resolve => setTimeout(resolve, offsetMs));
     } catch (error) {
         console.error('Error playing rhythm:', error);
     } finally {
         isPlaying = false;
-        const buttons = document.querySelectorAll('.play-rhythm');
         buttons.forEach(btn => btn.disabled = false);
     }
 }
@@ -221,14 +241,13 @@ async function initAudio() {
 function initRhythmButtons() {
     document.querySelectorAll('.play-rhythm').forEach(button => {
         button.addEventListener('click', async () => {
-            const rhythm = button.dataset.rhythm;
-            if (!rhythm || isPlaying) return;
+            if (!button.dataset.rhythm || isPlaying) return;
 
             const originalText = button.textContent;
             button.textContent = 'Playing...';
 
             try {
-                await playRhythm(rhythm);
+                await playRhythm(button);
             } catch (err) {
                 console.error('Failed to play rhythm:', err);
             } finally {

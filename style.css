@@ -219,17 +219,20 @@ footer {
   #keyboard {
     margin: 2rem 1rem;
     padding: 1rem;
+    /* Fit 10 white keys (plus their 2px margins) inside the viewport,
+       minus the keyboard's own margin and padding (4rem total) */
+    --white-w: min(45px, calc((100vw - 4rem) / 10 - 2px));
   }
 
   .white {
-    width: 45px;
+    width: var(--white-w);
     height: 180px;
   }
   
   .black {
-    width: 30px;
+    width: calc(var(--white-w) * 2 / 3);
     height: 120px;
-    margin: 0 -15px;
+    margin: 0 calc(var(--white-w) / -3);
   }
 
   .key-label {
@@ -239,15 +242,23 @@ footer {
 }
 
 @media (max-width: 480px) {
+  #keyboard {
+    margin: 1.5rem 0.5rem;
+    padding: 0.5rem;
+    --white-w: calc((100vw - 2rem) / 10 - 2px);
+  }
+
   .white {
-    width: 40px;
     height: 160px;
   }
   
   .black {
-    width: 26px;
     height: 100px;
-    margin: 0 -13px;
+  }
+
+  .key-label {
+    padding: 4px 0;
+    font-size: 0.7rem;
   }
 }
 
