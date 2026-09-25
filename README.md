@@ -77,7 +77,7 @@ classic-bloody-piano/
 ## Customization
 
 - **Add More Notes**: Place additional `.mp3` files in the `sounds/` folder and update the key mapping in `script.js`.
-- **Change Rhythms**: Edit the rhythm section in `index.html` to add your own patterns.
+- **Change Rhythms**: Edit the rhythm cards in `index.html`. Each button takes `data-rhythm` (keyboard keys, e.g. `A,S,D`), `data-pattern` (each note's length in beats) and `data-beat-ms` (one beat in milliseconds). Melodies must fit the C4–C5 keys, so transpose them if needed.
 
 ---
 
