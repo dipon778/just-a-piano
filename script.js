@@ -1,8 +1,4 @@
-// Constants and Configuration
-const KEY_BINDINGS = ['A','W','S','E','D','F','T','G','Y','H','U','J','K','Z'];
-const OCTAVE_OFFSET = 4;
-
-// Note to frequency mapping (A440 tuning)
+// Keyboard key to note (sample file) mapping
 const NOTE_MAPPINGS = {
     keys: {
         'A': 'C4',   // Middle C
@@ -19,38 +15,23 @@ const NOTE_MAPPINGS = {
         'J': 'B4',
         'K': 'C5',   // High C
         'Z': 'A3'    // Low A for Für Elise
-    },
-    frequencies: {
-        'A3': 220.00,   // Low A
-        'C4': 261.63,   // Middle C
-        'Db4': 277.18,
-        'D4': 293.66,
-        'Eb4': 311.13,
-        'E4': 329.63,
-        'F4': 349.23,
-        'Gb4': 369.99,
-        'G4': 392.00,
-        'Ab4': 415.30,
-        'A4': 440.00,   // Concert pitch
-        'Bb4': 466.16,
-        'B4': 493.88,
-        'C5': 523.25    // High C
     }
 };
 
+// Browsers block fetch() on file:// pages, so when index.html is opened
+// directly we fall back to <audio> elements, which may load local files.
+// Served over HTTP we use Web Audio for lower latency.
+const USE_MEDIA_ELEMENTS = location.protocol === 'file:';
+
 // State management
-const audioCache = new Map();
-let selectedOctave = OCTAVE_OFFSET;
+const audioCache = new Map(); // key -> AudioBuffer, or HTMLAudioElement in fallback mode
 let audioContext = null;
 
 // Audio Context Initialization
 function initAudioContext() {
     const Audiocontext = window.AudioContext || window.webkitAudioContext;
     if (!audioContext) {
-        audioContext = new Audiocontext({
-            latencyHint: 'interactive',
-            sampleRate: 44100
-        });
+        audioContext = new Audiocontext({ latencyHint: 'interactive' });
     }
     
     // iOS specific unmute
@@ -90,57 +71,50 @@ async function loadAudio(url) {
     }
 }
 
+function loadMediaElement(url) {
+    return new Promise((resolve, reject) => {
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.addEventListener('canplaythrough', () => resolve(audio), { once: true });
+        audio.addEventListener('error', () => reject(new Error(`Error loading audio: ${url}`)), { once: true });
+        audio.src = url;
+        audio.load();
+    });
+}
+
+// Bump when sound files change: nginx caches /sounds/ for a year, so a new
+// query string is what makes browsers fetch the updated samples.
+const SOUNDS_VERSION = 3; // 3: black-key samples (Db4/Gb4/Ab4) replaced
+
 function buildAudioURL(noteName) {
-    return `sounds/${noteName}.mp3`;
+    return `sounds/${noteName}.mp3?v=${SOUNDS_VERSION}`;
 }
 
-// Note Playing and Analysis
-function isValidFrequency(freq) {
-    return freq >= 20 && freq <= 20000;
-}
-
+// Note Playing
 function playNote(key) {
-    const audioBuffer = audioCache.get(key);
-    if (!audioBuffer) {
+    const sample = audioCache.get(key);
+    if (!sample) {
         console.warn(`No audio buffer found for key: ${key}`);
         return;
     }
 
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 4096;
-    const source = audioContext.createBufferSource();
-    
-    source.buffer = audioBuffer;
-    source.connect(analyser);
-    analyser.connect(audioContext.destination);
-    
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    
-    source.start(0);
-    requestAnimationFrame(() => {
-        analyser.getFloatFrequencyData(dataArray);
-        const freq = calculateFundamentalFrequency(dataArray, audioContext.sampleRate, analyser.fftSize);
-        logNoteAnalysis(key, freq);
-    });
-    
-    highlightKey(key);
-}
-
-function calculateFundamentalFrequency(dataArray, sampleRate, fftSize) {
-    const frequencyBinCount = sampleRate / fftSize;
-    const maxBin = Math.floor(2000 / frequencyBinCount);
-    let maxIndex = 0;
-    let maxValue = -Infinity;
-    
-    for (let i = 0; i < maxBin; i++) {
-        if (dataArray[i] > maxValue) {
-            maxValue = dataArray[i];
-            maxIndex = i;
+    if (USE_MEDIA_ELEMENTS) {
+        // A fresh clone per press lets repeated notes overlap
+        sample.cloneNode().play().catch(err => console.warn(`Could not play ${key}:`, err));
+    } else {
+        // Browsers start the context suspended until a user gesture; any
+        // key press or click that reaches here counts as one.
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
         }
+
+        const source = audioContext.createBufferSource();
+        source.buffer = sample;
+        source.connect(audioContext.destination);
+        source.start(0);
     }
-    
-    return maxIndex * frequencyBinCount;
+
+    highlightKey(key);
 }
 
 // Rhythm Playing
@@ -193,6 +167,9 @@ function updateStatus(message) {
 
 // Event Handlers
 function handleKeyPress(e) {
+    // Ignore auto-repeat while held and shortcuts like Ctrl+S / Cmd+A
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+
     const key = e.key.toUpperCase();
     if (NOTE_MAPPINGS.keys[key]) {
         playNote(key);
@@ -200,23 +177,25 @@ function handleKeyPress(e) {
 }
 
 function handleKeyClick(e) {
-    const key = e.target.dataset.key;
+    // currentTarget is the .key element even when the label span is clicked
+    const key = e.currentTarget.dataset.key;
     if (key) playNote(key);
 }
 
 // Initialization
 async function initAudio() {
     try {
-        if (!audioContext) initAudioContext();
-        
+        if (!USE_MEDIA_ELEMENTS && !audioContext) initAudioContext();
+        const load = USE_MEDIA_ELEMENTS ? loadMediaElement : loadAudio;
+
         updateStatus('Loading sound files...');
-        
+
         // Load all notes defined in NOTE_MAPPINGS
         for (const [key, note] of Object.entries(NOTE_MAPPINGS.keys)) {
             try {
                 const url = buildAudioURL(note);
-                const buffer = await loadAudio(url);
-                audioCache.set(key, buffer);
+                const sample = await load(url);
+                audioCache.set(key, sample);
             } catch (err) {
                 console.error(`Failed to load audio for ${key}:`, err);
             }
@@ -224,9 +203,10 @@ async function initAudio() {
 
         // Add event listeners
         document.addEventListener('keydown', handleKeyPress);
+        // pointerdown covers mouse, touch and pen with a single event,
+        // avoiding the duplicate emulated mousedown after touchstart
         document.querySelectorAll('.key').forEach(el => {
-            el.addEventListener('mousedown', handleKeyClick);
-            el.addEventListener('touchstart', handleKeyClick, { passive: true });
+            el.addEventListener('pointerdown', handleKeyClick);
         });
 
         updateStatus('Ready to play!');
@@ -272,5 +252,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // For Safari and mobile browsers
 document.addEventListener('click', () => {
-    if (!audioContext) initAudioContext();
+    if (!USE_MEDIA_ELEMENTS && !audioContext) initAudioContext();
 }, { once: true });
