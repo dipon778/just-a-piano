@@ -1,10 +1,11 @@
-version: '3.8'
 services:
   piano:
     build: .
     ports:
-      - "8080:80"
+      # Host port is configurable: PIANO_PORT=8081 docker compose up (or set it in .env)
+      - "${PIANO_PORT:-8080}:80"
     volumes:
-      - ./:/usr/share/nginx/html
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      # Mounted read-only so edits show up on refresh without rebuilding
+      - ./:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped

@@ -53,8 +53,8 @@ docker compose up --build
 
 ### 3. Manual Run (Without Docker)
 
-Just open `index.html` in your browser.  
-**Note:** For sound to work, you must serve files via a local server (e.g. [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) in VS Code).
+Just open `index.html` in your browser — no server needed.  
+**Note:** Opened as a local file, notes play through `<audio>` elements. Serving the folder (e.g. Docker, or [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) in VS Code) uses the Web Audio API instead, which has lower latency.
 
 ---
 
