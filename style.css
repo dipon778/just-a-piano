@@ -7,13 +7,11 @@
   --key-highlight: #e6e6e6;
   --accent: #c4a484;
   --accent-dark: #a36f3d;
-  --bg-overlay: rgba(16, 16, 16, 0.95);
+  --bg: #1c1c1c;
   --highlight: rgba(196, 164, 132, 0.3);
   --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
   --shadow-lg: 0 8px 16px rgba(0,0,0,0.1);
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
 *,
 *::before,
@@ -29,8 +27,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: linear-gradient(var(--bg-overlay), var(--bg-overlay)),
-              url('background.jpg') center/cover fixed no-repeat;
+  background: var(--bg);
   color: var(--white-key);
   font-family: var(--font-sans);
   line-height: 1.6;
@@ -66,7 +63,6 @@ p.subheading {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(10px);
   user-select: none;
 }
 
@@ -78,7 +74,8 @@ p.subheading {
   justify-content: center;
   font-family: var(--font-serif);
   font-weight: 500;
-  transition: all 0.1s ease-out;
+  transition: background-color 0.1s ease-out, color 0.1s ease-out,
+              transform 0.1s ease-out, box-shadow 0.1s ease-out;
 }
 
 .white {
@@ -120,10 +117,18 @@ p.subheading {
   opacity: 0.8;
 }
 
-footer {
-  margin: 3rem 2rem;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+#status {
+  min-height: 1.6em;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.error-message {
+  margin: 1rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(196, 164, 132, 0.1);
   text-align: center;
 }
 
@@ -131,7 +136,6 @@ footer {
     width: 100%;
     padding: 2rem;
     background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(10px);
     margin-top: 2rem;
 }
 
@@ -148,34 +152,21 @@ footer {
     padding: 1rem 0;
 }
 
-.sequence-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
-    padding: 2rem 0;
-    margin-top: 2rem;
-}
-
-.rhythm-card, .sequence-card {
+.rhythm-card {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 1.5rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sequence-card {
-    background: rgba(196, 164, 132, 0.1);
-    border: 1px solid var(--accent);
-}
-
-.rhythm-card:hover, .sequence-card:hover {
+.rhythm-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     border-color: var(--accent);
 }
 
-.play-rhythm, .play-sequence {
+.play-rhythm {
     background: var(--accent);
     color: var(--white-key);
     border: none;
@@ -183,22 +174,17 @@ footer {
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
     width: 100%;
     margin-top: 1rem;
 }
 
-.play-sequence {
-    background: linear-gradient(45deg, var(--accent), darken(var(--accent), 10%));
-    font-weight: 500;
-}
-
-.play-rhythm:hover, .play-sequence:hover {
+.play-rhythm:hover {
     transform: scale(1.02);
     background: var(--accent-dark);
 }
 
-.play-rhythm:disabled, .play-sequence:disabled {
+.play-rhythm:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     background: var(--accent-dark);
@@ -260,17 +246,4 @@ footer {
     padding: 4px 0;
     font-size: 0.7rem;
   }
-}
-
-/* Add to :root */
-@supports not (backdrop-filter: blur(10px)) {
-    .rhythm-section, #keyboard {
-        background: rgba(0, 0, 0, 0.85);
-    }
-}
-
-/* Add vendor prefixes */
-.rhythm-section, #keyboard {
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
 }

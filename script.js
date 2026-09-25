@@ -24,8 +24,10 @@ const NOTE_MAPPINGS = {
 
 // Browsers block fetch() on file:// pages, so when index.html is opened
 // directly we fall back to <audio> elements, which may load local files.
+// The same fallback covers browsers without Web Audio.
 // Served over HTTP we use Web Audio for lower latency.
-const USE_MEDIA_ELEMENTS = location.protocol === 'file:';
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+const USE_MEDIA_ELEMENTS = location.protocol === 'file:' || !AudioContextClass;
 
 // State management
 const audioCache = new Map(); // key -> AudioBuffer, or HTMLAudioElement in fallback mode
@@ -33,9 +35,8 @@ let audioContext = null;
 
 // Audio Context Initialization
 function initAudioContext() {
-    const Audiocontext = window.AudioContext || window.webkitAudioContext;
     if (!audioContext) {
-        audioContext = new Audiocontext({ latencyHint: 'interactive' });
+        audioContext = new AudioContextClass({ latencyHint: 'interactive' });
     }
     
     // iOS specific unmute
@@ -52,27 +53,20 @@ function initAudioContext() {
 
 // Audio Loading and Setup
 async function loadAudio(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        
-        // Add error handling for decoding
-        const audioBuffer = await new Promise((resolve, reject) => {
-            audioContext.decodeAudioData(
-                arrayBuffer,
-                buffer => resolve(buffer),
-                error => reject(new Error('Error decoding audio: ' + error))
-            );
-        });
-        
-        return audioBuffer;
-    } catch (err) {
-        console.error(`Failed to load audio from ${url}:`, err);
-        throw err;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
+    const arrayBuffer = await response.arrayBuffer();
+
+    // Callback form: older Safari doesn't return a promise from decodeAudioData
+    return new Promise((resolve, reject) => {
+        audioContext.decodeAudioData(
+            arrayBuffer,
+            buffer => resolve(buffer),
+            error => reject(new Error('Error decoding audio: ' + error))
+        );
+    });
 }
 
 function loadMediaElement(url) {
@@ -204,36 +198,41 @@ function handleKeyClick(e) {
 
 // Initialization
 async function initAudio() {
-    try {
-        if (!USE_MEDIA_ELEMENTS && !audioContext) initAudioContext();
-        const load = USE_MEDIA_ELEMENTS ? loadMediaElement : loadAudio;
+    // Listeners go on first so the keyboard responds while samples load;
+    // a key whose sample hasn't arrived yet is simply silent.
+    document.addEventListener('keydown', handleKeyPress);
+    // pointerdown covers mouse, touch and pen with a single event,
+    // avoiding the duplicate emulated mousedown after touchstart
+    document.querySelectorAll('.key').forEach(el => {
+        el.addEventListener('pointerdown', handleKeyClick);
+    });
 
-        updateStatus('Loading sound files...');
+    if (!USE_MEDIA_ELEMENTS) initAudioContext();
+    const load = USE_MEDIA_ELEMENTS ? loadMediaElement : loadAudio;
 
-        // Load all notes defined in NOTE_MAPPINGS
-        for (const [key, note] of Object.entries(NOTE_MAPPINGS.keys)) {
-            try {
-                const url = buildAudioURL(note);
-                const sample = await load(url);
-                audioCache.set(key, sample);
-            } catch (err) {
-                console.error(`Failed to load audio for ${key}:`, err);
-            }
+    updateStatus('Loading sounds...');
+
+    // Load every note in parallel; one failure shouldn't block the rest
+    const entries = Object.entries(NOTE_MAPPINGS.keys);
+    const results = await Promise.allSettled(entries.map(async ([key, note]) => {
+        audioCache.set(key, await load(buildAudioURL(note)));
+    }));
+
+    const failed = [];
+    results.forEach((result, i) => {
+        if (result.status === 'rejected') {
+            const note = entries[i][1];
+            console.error(`Failed to load sound ${note}:`, result.reason);
+            failed.push(note);
         }
+    });
 
-        // Add event listeners
-        document.addEventListener('keydown', handleKeyPress);
-        // pointerdown covers mouse, touch and pen with a single event,
-        // avoiding the duplicate emulated mousedown after touchstart
-        document.querySelectorAll('.key').forEach(el => {
-            el.addEventListener('pointerdown', handleKeyClick);
-        });
-
+    if (failed.length === entries.length) {
+        updateStatus('Could not load piano sounds. Check your connection and refresh.');
+    } else if (failed.length) {
+        updateStatus(`Ready to play! (${failed.length} of ${entries.length} sounds failed to load: ${failed.join(', ')})`);
+    } else {
         updateStatus('Ready to play!');
-    } catch (err) {
-        console.error('Audio initialization failed:', err);
-        updateStatus('Failed to load sounds. Please refresh.');
-        throw err;
     }
 }
 
@@ -261,15 +260,7 @@ function initRhythmButtons() {
 document.addEventListener('DOMContentLoaded', () => {
     initAudio().catch(err => {
         console.error('Failed to initialize audio:', err);
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = 'Failed to load piano sounds. Please refresh the page.';
-        document.body.prepend(errorDiv);
+        updateStatus('Audio could not start in this browser. Please refresh the page.');
     });
     initRhythmButtons();
 });
-
-// For Safari and mobile browsers
-document.addEventListener('click', () => {
-    if (!USE_MEDIA_ELEMENTS && !audioContext) initAudioContext();
-}, { once: true });
